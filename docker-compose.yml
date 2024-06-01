@@ -1,0 +1,61 @@
+version: "3"
+
+services:
+
+  init-hub:
+    image: "postgres:14"
+    container_name: init-jupyterhub
+    depends_on:
+      - postgres
+    networks:
+      - jupyterhub-network
+    volumes:
+      - "jupyterhub-data:/data"
+      - "./init.sh:/data/init.sh"
+    env_file:
+      .env_db
+    command: ["sh", "/data/init.sh"]
+
+  hub:
+    build:
+      context: .
+      dockerfile: Dockerfile.jupyterhub
+      args:
+        JUPYTERHUB_VERSION: 4.1.5
+    container_name: jupyterhub
+    restart: always
+    depends_on:
+      - postgres
+      - init-hub
+    networks:
+      - jupyterhub-network
+    volumes:
+      - "./jupyterhub_config.py:/srv/jupyterhub/jupyterhub_config.py:ro"
+      - "/var/run/docker.sock:/var/run/docker.sock:rw"
+      - "jupyterhub-data:/data"
+    ports:
+      - "8000:8000"
+    env_file:
+      .env
+    entrypoint: ["jupyterhub"]
+    command: ["-f", "/srv/jupyterhub/jupyterhub_config.py", "--log-level=DEBUG"]
+
+  postgres:
+    image: "postgres:14"
+    container_name: postgres
+    networks:
+      - jupyterhub-network
+    env_file:
+      .env_db
+    healthcheck:
+      test: ["CMD-SHELL", "sh -c 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}'"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+volumes:
+  jupyterhub-data:
+
+networks:
+  jupyterhub-network:
+    name: jupyterhub-network

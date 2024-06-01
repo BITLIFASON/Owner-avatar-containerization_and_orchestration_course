@@ -1,0 +1,7 @@
+ .git
+Dockerfile*
+.dockerignore
+docker-compose.yml
+README.md
+CHANGES.md
+jupyterhub_config.py

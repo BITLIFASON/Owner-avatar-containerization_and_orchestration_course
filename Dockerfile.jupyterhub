@@ -1,0 +1,8 @@
+ARG JUPYTERHUB_VERSION
+FROM quay.io/jupyterhub/jupyterhub:$JUPYTERHUB_VERSION
+
+RUN apt update && apt -y install python3-dev
+RUN python3 -m pip install --no-cache-dir \
+    dockerspawner \
+    jupyterhub-nativeauthenticator \
+    psycopg2-binary
